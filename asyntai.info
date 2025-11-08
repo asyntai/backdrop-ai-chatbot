@@ -1,0 +1,9 @@
+name = Asyntai - AI Chatbot
+description = AI assistant / chatbot – Provides instant answers to your website visitors
+backdrop = 1.x
+type = module
+package = Chat
+configure = admin/config/services/asyntai
+
+version = 1.x-1.0.0
+project = asyntai

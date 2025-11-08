@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Asyntai module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function asyntai_install() {
+  // Set default config values
+  $config = config('asyntai.settings');
+  $config->set('site_id', '');
+  $config->set('script_url', 'https://asyntai.com/static/js/chat-widget.js');
+  $config->set('account_email', '');
+  $config->save();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function asyntai_uninstall() {
+  // Remove config on uninstall
+  $config = config('asyntai.settings');
+  $config->delete();
+}

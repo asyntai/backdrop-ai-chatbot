@@ -1,0 +1,175 @@
+<?php
+
+/**
+ * @file
+ * Asyntai AI Chatbot module.
+ */
+
+/**
+ * Implements hook_help().
+ */
+function asyntai_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#asyntai':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Asyntai adds an AI chatbot to your Backdrop site. It provides instant answers to visitors according to your instructions/knowledge base.') . '</p>';
+      $output .= '<h3>' . t('Configuration') . '</h3>';
+      $output .= '<p>' . t('Go to Configuration > Services > Asyntai AI Chatbot to connect your Asyntai account.') . '</p>';
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function asyntai_permission() {
+  return array(
+    'administer asyntai' => array(
+      'title' => t('Administer Asyntai AI Chatbot'),
+      'description' => t('Configure chatbot settings'),
+      'restrict access' => TRUE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function asyntai_menu() {
+  $items = array();
+
+  // Admin settings page
+  $items['admin/config/services/asyntai'] = array(
+    'title' => 'Asyntai AI Chatbot',
+    'description' => 'Configure Asyntai AI chatbot settings',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('asyntai_settings_form'),
+    'access arguments' => array('administer asyntai'),
+    'file' => 'asyntai.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  // AJAX endpoint to save settings
+  $items['asyntai/api/save'] = array(
+    'page callback' => 'asyntai_api_save',
+    'access arguments' => array('administer asyntai'),
+    'type' => MENU_CALLBACK,
+  );
+
+  // AJAX endpoint to reset settings
+  $items['asyntai/api/reset'] = array(
+    'page callback' => 'asyntai_api_reset',
+    'access arguments' => array('administer asyntai'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function asyntai_config_info() {
+  $prefixes['asyntai.settings'] = array(
+    'label' => t('Asyntai settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
+
+/**
+ * Implements hook_init().
+ */
+function asyntai_init() {
+  // Don't add widget on admin pages
+  if (path_is_admin(current_path())) {
+    return;
+  }
+
+  $config = config('asyntai.settings');
+  $site_id = trim((string) $config->get('site_id'));
+
+  if ($site_id === '') {
+    return;
+  }
+
+  $script_url = trim((string) $config->get('script_url'));
+  if ($script_url === '') {
+    $script_url = 'https://asyntai.com/static/js/chat-widget.js';
+  }
+
+  // Add the widget script as external JS with custom attributes
+  backdrop_add_js($script_url, array(
+    'type' => 'external',
+    'scope' => 'header',
+    'defer' => TRUE,
+    'async' => TRUE,
+    'attributes' => array(
+      'data-asyntai-id' => $site_id,
+    ),
+  ));
+}
+
+/**
+ * AJAX callback to save connection settings.
+ */
+function asyntai_api_save() {
+  $raw_data = file_get_contents('php://input');
+  $data = json_decode($raw_data, TRUE);
+
+  if (!is_array($data)) {
+    backdrop_json_output(array('success' => FALSE, 'error' => 'Invalid JSON'));
+    backdrop_exit();
+  }
+
+  $site_id = isset($data['site_id']) ? trim((string) $data['site_id']) : '';
+
+  if ($site_id === '') {
+    backdrop_json_output(array('success' => FALSE, 'error' => 'missing site_id'));
+    backdrop_exit();
+  }
+
+  $config = config('asyntai.settings');
+
+  $config->set('site_id', $site_id);
+
+  if (!empty($data['script_url'])) {
+    $config->set('script_url', trim((string) $data['script_url']));
+  }
+  else {
+    $config->set('script_url', 'https://asyntai.com/static/js/chat-widget.js');
+  }
+
+  if (!empty($data['account_email'])) {
+    $config->set('account_email', trim((string) $data['account_email']));
+  }
+
+  $config->save();
+
+  // Reload config to return saved values
+  $saved = config('asyntai.settings');
+
+  backdrop_json_output(array(
+    'success' => TRUE,
+    'saved' => array(
+      'site_id' => $saved->get('site_id'),
+      'script_url' => $saved->get('script_url'),
+      'account_email' => $saved->get('account_email'),
+    ),
+  ));
+  backdrop_exit();
+}
+
+/**
+ * AJAX callback to reset connection settings.
+ */
+function asyntai_api_reset() {
+  $config = config('asyntai.settings');
+  $config->set('site_id', '');
+  $config->set('script_url', 'https://asyntai.com/static/js/chat-widget.js');
+  $config->set('account_email', '');
+  $config->save();
+
+  backdrop_json_output(array('success' => TRUE));
+  backdrop_exit();
+}
