@@ -24,6 +24,8 @@ This module embeds the Asyntai chatbot on your Backdrop site and provides a simp
 3. Find Asyntai → Enable → Save
 4. Navigate to Configuration → Web services → Asyntai AI Chatbot
 
+**Note: Alternatively, if you don't want to use a plugin, you can also get a JavaScript snippet at asyntai.com/dashboard and manually insert it into your web pages.**
+
 ## Configuration
 
 After installation:
@@ -61,5 +63,6 @@ Email us at hello@asyntai.com or try our chatbot directly at [asyntai.com/](http
 ![Asyntai AI chatbot 3](https://asyntai.com/static/images/ai-chatbot-for-websites-3.png)
 ![Asyntai AI chatbot 4](https://asyntai.com/static/images/ai-chatbot-for-websites-4.png)
 ![Asyntai AI chatbot 5](https://asyntai.com/static/images/ai-chatbot-for-websites-5.png)
+
 
 
